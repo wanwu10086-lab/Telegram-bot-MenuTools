@@ -1,0 +1,12 @@
+﻿# Python 缓存
+__pycache__/
+*.pyc
+
+# 虚拟环境
+.venv/
+
+# 敏感配置（机器人 Token 钥匙盒，绝不提交到 git）
+.env
+
+# 临时文件
+*.tmp

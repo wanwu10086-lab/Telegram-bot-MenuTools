@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>量化助手 · 菜单编辑工具</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+    background: #f0f4f8; color: #1f2d3d; padding: 24px;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; }
+  h1 {
+    font-size: 22px; margin-bottom: 4px; display: flex; align-items: center; gap: 10px;
+  }
+  h1 .badge {
+    background: #2f6fed; color: #fff; font-size: 12px; border-radius: 10px;
+    padding: 2px 10px; font-weight: normal;
+  }
+  .tip {
+    font-size: 13px; color: #5a6b80; margin-bottom: 18px;
+  }
+  .card {
+    background: #fff; border-radius: 12px; padding: 18px 20px;
+    margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,.08);
+  }
+  .card h2 { font-size: 15px; margin-bottom: 12px; color: #31445c; }
+  label { display: block; font-size: 13px; color: #5a6b80; margin-bottom: 6px; }
+  textarea, input[type=text] {
+    width: 100%; border: 1px solid #d5dee9; border-radius: 8px;
+    padding: 8px 10px; font-size: 14px; font-family: inherit;
+  }
+  textarea { min-height: 70px; resize: vertical; }
+  .menu-row {
+    border: 1px dashed #c3d0dd; border-radius: 8px; padding: 10px;
+    margin-bottom: 10px; background: #fafcfe;
+  }
+  .row-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .row-head .label { font-size: 13px; color: #7a8ba0; }
+  .btn {
+    border: 0; border-radius: 6px; padding: 5px 12px; font-size: 13px;
+    cursor: pointer; color: #fff; background: #2f6fed;
+  }
+  .btn.gray { background: #7f8fa4; }
+  .btn.green { background: #22a06b; }
+  .btn.red { background: #e5484d; }
+  .btn.sm { padding: 3px 8px; font-size: 12px; }
+  .btn:hover { opacity: .85; }
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn-cell {
+    background: #fff; border: 1px solid #dfe8f1; border-radius: 8px;
+    padding: 10px; width: calc(50% - 4px); position: relative; display: flex; flex-direction: column; gap: 6px;
+    flex: 1 1 calc(50% - 4px);
+  }
+  .btn-cell .del {
+    position: absolute; top: 6px; right: 6px; background: #e5484d; color: #fff;
+    border: 0; border-radius: 4px; width: 18px; height: 18px; font-size: 11px;
+    line-height: 1; cursor: pointer;
+  }
+  .btn-cell input[type=text] { background: #eef3ff; border-color: #b9cbf2; }
+  .btn-cell .btn-name { font-size: 12px; color: #5a6b80; }
+  .btn-cell textarea { min-height: 52px; }
+  .empty-tip { color: #a0aebc; font-size: 13px; padding: 12px 0; text-align: center; }
+  .footer-actions { display: flex; gap: 10px; align-items: center; }
+  .footer-actions .save { background: #22a06b; font-size: 15px; padding: 10px 26px; }
+  #status { font-size: 13px; margin-left: 6px; }
+  .status-ok { color: #22a06b; }
+  .status-err { color: #e5484d; }
+  .status-save { color: #2f6fed; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>量化助手 <span class="badge">菜单编辑工具</span></h1>
+  <div class="tip">
+    改完点底部【保存菜单并生效】→ 内容写进 menu.json → 机器人下次对话就按新菜单回答。<br>
+    保存后机器人<b>不用重启</b>，正在运行的窗口不用关。
+  </div>
+
+  <!-- 欢迎语 -->
+  <div class="card">
+    <h2>1. 欢迎语（用户发 /start 时看到的第一句话）</h2>
+    <textarea id="welcome" placeholder="欢迎语内容..."></textarea>
+  </div>
+
+  <!-- 按钮菜单 -->
+  <div class="card">
+    <h2>2. 按钮菜单（聊天框下方的一排排按钮）</h2>
+    <p class="tip">每一行是一组按钮。点【＋加按钮】该行会加一个按钮；鼠标移到按钮右下角可删除。</p>
+    <div id="rows"></div>
+    <div style="display:flex; gap:8px; margin-top:4px;">
+      <button class="btn" onclick="addRow()">＋ 添加一行</button>
+    </div>
+  </div>
+
+  <!-- 底部保存 -->
+  <div class="card">
+    <div class="footer-actions">
+      <button class="btn save" onclick="saveMenu()">💾 保存菜单并生效</button>
+      <button class="btn gray" onclick="loadMenu()">↻ 重新读取当前菜单</button>
+      <span id="status"></span>
+    </div>
+    <div class="tip" style="margin:10px 0 0 0;">
+      温馨提示：<br>
+      · 按钮文字 = 用户在按钮上看到的名字<br>
+      · 回复话术 = 用户按了这个按钮后，机器人回复的内容<br>
+      · 只改话术不影响菜单布局；改了按钮文字则菜单按钮名字跟着变
+    </div>
+  </div>
+</div>
+
+<script>
+// ==== 状态 ====
+// rows: 二维数组 [ [ {text, reply}, {text, reply} ], [ ... ], ... ]
+let state = { welcome_text: "", menu: [], replies: {} };
+
+function render() {
+  const wrap = document.getElementById("rows");
+  wrap.innerHTML = "";
+  if (!state.menu.length) {
+    wrap.innerHTML = '<div class="empty-tip">还没有按钮，点【＋ 添加一行】开始建菜单吧。</div>';
+    return;
+  }
+  state.menu.forEach((row, ri) => {
+    const rowEl = document.createElement("div");
+    rowEl.className = "menu-row";
+    rowEl.innerHTML = `
+      <div class="row-head">
+        <span class="label">第 ${ri + 1} 行</span>
+        <span>
+          <button class="btn green sm" onclick="addButton(${ri})">＋ 加按钮</button>
+          <button class="btn red sm" onclick="removeRow(${ri})">删除这行</button>
+        </span>
+      </div>
+    `;
+    const btnRow = document.createElement("div");
+    btnRow.className = "btn-row";
+    row.forEach((btn, bi) => {
+      const cell = document.createElement("div");
+      cell.className = "btn-cell";
+      cell.innerHTML = `
+        <button class="del" onclick="removeButton(${ri},${bi})" title="删除该按钮">✕</button>
+        <span class="btn-name">按钮文字（用户看到的名字）</span>
+        <input type="text" value="${esc(btn.text || "")}" oninput="state.menu[${ri}][${bi}].text=this.value">
+        <span class="btn-name">回复话术（按了后机器人说的话）</span>
+        <textarea oninput="state.menu[${ri}][${bi}].reply=this.value">${esc(btn.reply || "")}</textarea>
+      `;
+      btnRow.appendChild(cell);
+    });
+    rowEl.appendChild(btnRow);
+    wrap.appendChild(rowEl);
+  });
+}
+
+function esc(s) {
+  return (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+// ---- 增删改操作 ----
+function addRow() { state.menu.push([{ text: "新按钮", reply: "点击后机器人回复这里的内容" }]); render(); }
+function removeRow(ri) { if (state.menu.length > 1) state.menu.splice(ri, 1); render(); }
+function addButton(ri) { state.menu[ri].push({ text: "新按钮", reply: "点击后机器人回复这里的内容" }); render(); }
+function removeButton(ri, bi) { state.menu[ri].splice(bi, 1); if (!state.menu[ri].length) state.menu.splice(ri, 1); render(); }
+
+// ---- 与服务器互通 ----
+function setStatus(msg, cls) {
+  const el = document.getElementById("status");
+  el.textContent = msg;
+  el.className = cls || "";
+}
+
+async function loadMenu() {
+  setStatus("读取中...", "status-save");
+  try {
+    const resp = await fetch("/api/menu");
+    const data = await resp.json();
+    state = {
+      welcome_text: data.welcome_text || "",
+      menu: (data.menu || []).map(row => row.map(t => ({ text: t, reply: (data.replies || {})[t] || "" })))
+    };
+    document.getElementById("welcome").value = state.welcome_text;
+    render();
+    setStatus("已读取当前菜单。" , "status-ok");
+  } catch (e) {
+    setStatus("读取失败：无法连上本地工具服务器", "status-err");
+  }
+}
+
+async function saveMenu() {
+  setStatus("保存中...", "status-save");
+  const welcome = document.getElementById("welcome").value;
+  // 先检查：两个按钮文字相同，会互相覆盖话术，警告用户
+  const allTexts = state.menu.flat().map(b => (b.text || "").trim()).filter(Boolean);
+  const dup = allTexts.filter((t, i) => allTexts.indexOf(t) !== i);
+  if (dup.length) {
+    setStatus("⚠️ 有重复的按钮文字（" + [...new Set(dup)].join("、") + "），请改成不同名字再保存", "status-err");
+    return;
+  }
+  // 收集：保留按钮原有顺序；一个按钮文字只允许出现一次（重复的文字会互相覆盖话术）
+  const menu = [];
+  const replies = {};
+  const seen = {};
+  for (const row of state.menu) {
+    const newRow = [];
+    for (const btn of row) {
+      const text = (btn.text || "").trim();
+      if (!text) continue;             // 空按钮忽略
+      newRow.push(text);
+      if (!seen[text]) { replies[text] = btn.reply || ""; seen[text] = true; }
+    }
+    if (newRow.length) menu.push(newRow);
+  }
+  const payload = { welcome_text: welcome, menu, replies };
+  try {
+    const resp = await fetch("/api/menu", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    if (resp.ok) {
+      // 本地显示也同步一份，防止状态不一致
+      state.welcome_text = welcome;
+      setStatus("✅ 已保存成功！现在需要在“自创的机器人”对话框里发送 “/start” 即可更新菜单。若无更新可手机端重开App再试下。", "status-ok");
+    } else {
+      setStatus("保存失败：" + (await resp.text()), "status-err");
+    }
+  } catch (e) {
+    setStatus("保存失败：无法连上本地工具服务器", "status-err");
+  }
+}
+
+// 页面一打开就读取当前菜单
+loadMenu();
+</script>
+</body>
+</html>
