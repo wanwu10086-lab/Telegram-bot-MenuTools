@@ -1,4 +1,4 @@
-﻿# Python 缓存
+# Python 缓存
 __pycache__/
 *.pyc
 
@@ -10,3 +10,12 @@ __pycache__/
 
 # 临时文件
 *.tmp
+
+# 运行时产生的数据（图片仓库，每台电脑的图不同，不进 git）
+images/
+
+# 本地备份文件（反悔保险，不进 git）
+*.bak
+
+# 工作索引（只留在 D 盘测试目录）
+docs/PROJECT_INDEX.md

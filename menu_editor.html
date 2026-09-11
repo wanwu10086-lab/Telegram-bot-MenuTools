@@ -27,9 +27,9 @@
   }
   .card h2 { font-size: 15px; margin-bottom: 12px; color: #31445c; }
   label { display: block; font-size: 13px; color: #5a6b80; margin-bottom: 6px; }
-  textarea, input[type=text] {
+  textarea, input[type=text], select {
     width: 100%; border: 1px solid #d5dee9; border-radius: 8px;
-    padding: 8px 10px; font-size: 14px; font-family: inherit;
+    padding: 8px 10px; font-size: 14px; font-family: inherit; background: #fff;
   }
   textarea { min-height: 70px; resize: vertical; }
   .menu-row {
@@ -68,6 +68,15 @@
   .status-ok { color: #22a06b; }
   .status-err { color: #e5484d; }
   .status-save { color: #2f6fed; }
+  /* 新加的：图片相关样式 */
+  .thumb {
+    max-width: 140px; max-height: 140px; border-radius: 8px;
+    border: 1px solid #d5dee9; display: block;
+  }
+  .img-flex { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .img-box { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+  .img-side { display: flex; flex-direction: column; gap: 6px; }
+  .img-side span { font-size: 12px; color: #7a8ba0; word-break: break-all; max-width: 200px; }
 </style>
 </head>
 <body>
@@ -80,14 +89,21 @@
 
   <!-- 欢迎语 -->
   <div class="card">
-    <h2>1. 欢迎语（用户发 /start 时看到的第一句话）</h2>
+    <h2>1. 欢迎语（用户发 /start 时看到的第一句话，可配图）</h2>
     <textarea id="welcome" placeholder="欢迎语内容..."></textarea>
+    <div class="img-box">
+      <label>配图（可选）：点按钮从电脑里挑一张图上传（jpg/png/webp/gif，不超过 10MB）</label>
+      <div id="welcomeImgArea" class="img-flex"></div>
+    </div>
   </div>
 
   <!-- 按钮菜单 -->
   <div class="card">
     <h2>2. 按钮菜单（聊天框下方的一排排按钮）</h2>
-    <p class="tip">每一行是一组按钮。点【＋加按钮】该行会加一个按钮；鼠标移到按钮右下角可删除。</p>
+    <p class="tip">
+      每一行是一组按钮。点【＋加按钮】该行会加一个按钮；鼠标移到按钮右上角可删除。<br>
+      每个按钮都能配一张图，你写的话会自动成为图片下方的小字说明（图和话合在一条消息里）。
+    </p>
     <div id="rows"></div>
     <div style="display:flex; gap:8px; margin-top:4px;">
       <button class="btn" onclick="addRow()">＋ 添加一行</button>
@@ -105,15 +121,36 @@
       温馨提示：<br>
       · 按钮文字 = 用户在按钮上看到的名字<br>
       · 回复话术 = 用户按了这个按钮后，机器人回复的内容<br>
-      · 只改话术不影响菜单布局；改了按钮文字则菜单按钮名字跟着变
+      · 配图 = 机器人回复时一起发的图片（从电脑选择上传，单张不超过 10MB）<br>
+      · 配了图的话，图和话合在<b>一条消息</b>里一次发出，你写的话变成图片下方的小字说明<br>
+      · 上传的图片只存在你电脑的项目文件夹（images）里，不上传别处
     </div>
   </div>
 </div>
 
+<!-- 隐藏的图片选择框：页面上所有"上传图片"按钮都借用它 -->
+<input type="file" id="fileInput" accept="image/*" style="display:none">
+
 <script>
 // ==== 状态 ====
-// rows: 二维数组 [ [ {text, reply}, {text, reply} ], [ ... ], ... ]
-let state = { welcome_text: "", menu: [], replies: {} };
+// 每个按钮是两件套：{ text 按钮名, replyText 话术, image 图片文件名 }
+let state = { welcome_text: "", welcome_image: "", menu: [], replies: {} };
+// 记录"这张要传的图"将来贴到哪：'welcome'（欢迎语）或 {ri, bi}（第ri行第bi个按钮）
+let imageTarget = null;
+
+// 一个按钮的配图区域：有图显示缩略图+移除按钮，没图显示上传按钮
+function imageWidgetHTML(ri, bi, image) {
+  if (image) {
+    return `<div class="img-flex">
+      <img class="thumb" src="/api/image/${encodeURIComponent(image)}" alt="配图预览">
+      <div class="img-side">
+        <span>${esc(image)}</span>
+        <button class="btn gray sm" onclick="removeButtonImage(${ri},${bi})">移除图片</button>
+      </div>
+    </div>`;
+  }
+  return `<button class="btn sm" onclick="pickImage({ri:${ri},bi:${bi}})">🖼 上传图片</button>`;
+}
 
 function render() {
   const wrap = document.getElementById("rows");
@@ -144,7 +181,9 @@ function render() {
         <span class="btn-name">按钮文字（用户看到的名字）</span>
         <input type="text" value="${esc(btn.text || "")}" oninput="state.menu[${ri}][${bi}].text=this.value">
         <span class="btn-name">回复话术（按了后机器人说的话）</span>
-        <textarea oninput="state.menu[${ri}][${bi}].reply=this.value">${esc(btn.reply || "")}</textarea>
+        <textarea oninput="state.menu[${ri}][${bi}].replyText=this.value">${esc(btn.replyText || "")}</textarea>
+        <span class="btn-name">配图（可选）</span>
+        ${imageWidgetHTML(ri, bi, btn.image)}
       `;
       btnRow.appendChild(cell);
     });
@@ -153,15 +192,69 @@ function render() {
   });
 }
 
+// 欢迎语区域的配图区
+function renderWelcome() {
+  document.getElementById("welcome").value = state.welcome_text || "";
+  const area = document.getElementById("welcomeImgArea");
+  if (state.welcome_image) {
+    area.innerHTML = `
+      <img class="thumb" src="/api/image/${encodeURIComponent(state.welcome_image)}" alt="配图预览">
+      <div class="img-side">
+        <span>${esc(state.welcome_image)}</span>
+        <button class="btn gray sm" onclick="removeWelcomeImage()">移除图片</button>
+      </div>
+    `;
+  } else {
+    area.innerHTML = `<button class="btn sm" onclick="pickImage('welcome')">🖼 选择图片上传</button>`;
+  }
+}
+
 function esc(s) {
   return (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
 // ---- 增删改操作 ----
-function addRow() { state.menu.push([{ text: "新按钮", reply: "点击后机器人回复这里的内容" }]); render(); }
+function addRow() { state.menu.push([{ text: "新按钮", replyText: "点击后机器人回复这里的内容", image: "" }]); render(); }
 function removeRow(ri) { if (state.menu.length > 1) state.menu.splice(ri, 1); render(); }
-function addButton(ri) { state.menu[ri].push({ text: "新按钮", reply: "点击后机器人回复这里的内容" }); render(); }
+function addButton(ri) { state.menu[ri].push({ text: "新按钮", replyText: "点击后机器人回复这里的内容", image: "" }); render(); }
 function removeButton(ri, bi) { state.menu[ri].splice(bi, 1); if (!state.menu[ri].length) state.menu.splice(ri, 1); render(); }
+
+// ---- 图片上传相关 ----
+function pickImage(target) {
+  imageTarget = target;                        // 记住这张图待会儿贴到哪
+  document.getElementById("fileInput").click(); // 弹出电脑选图窗口
+}
+
+document.getElementById("fileInput").addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  e.target.value = "";                         // 清空选择，下次还能挑同一张
+  if (!file) return;
+  if (!/^image\//.test(file.type)) { setStatus("请选择图片文件（jpg / png / webp / gif）", "status-err"); return; }
+  if (file.size > 10 * 1024 * 1024) { setStatus("图片超过 10MB，请换一张小一点的", "status-err"); return; }
+  setStatus("图片上传中...", "status-save");
+  try {
+    const resp = await fetch("/api/upload?name=" + encodeURIComponent(file.name), {
+      method: "POST",
+      body: file
+    });
+    if (!resp.ok) { setStatus("图片上传失败：" + await resp.text(), "status-err"); return; }
+    const data = await resp.json();
+    if (imageTarget === "welcome") {
+      state.welcome_image = data.filename;
+    } else if (imageTarget) {
+      state.menu[imageTarget.ri][imageTarget.bi].image = data.filename;
+    }
+    imageTarget = null;
+    render();
+    renderWelcome();
+    setStatus("图片已上传。别忘了点下方【保存菜单并生效】真正写进菜谱！", "status-ok");
+  } catch (err) {
+    setStatus("图片上传失败：无法连上本地工具服务器", "status-err");
+  }
+});
+
+function removeWelcomeImage() { state.welcome_image = ""; renderWelcome(); }
+function removeButtonImage(ri, bi) { state.menu[ri][bi].image = ""; render(); }
 
 // ---- 与服务器互通 ----
 function setStatus(msg, cls) {
@@ -175,13 +268,22 @@ async function loadMenu() {
   try {
     const resp = await fetch("/api/menu");
     const data = await resp.json();
+    const replies = data.replies || {};
     state = {
       welcome_text: data.welcome_text || "",
-      menu: (data.menu || []).map(row => row.map(t => ({ text: t, reply: (data.replies || {})[t] || "" })))
+      welcome_image: data.welcome_image || "",
+      menu: (data.menu || []).map(row => row.map(t => {
+        const r = replies[t];
+        if (r && typeof r === "object") {
+          return { text: t, replyText: r.text || "", image: r.image || "" };
+        }
+        // 老格式（话术是纯文字）：自动当成"没配图"处理
+        return { text: t, replyText: (typeof r === "string" ? r : "") || "", image: "" };
+      }))
     };
-    document.getElementById("welcome").value = state.welcome_text;
+    renderWelcome();
     render();
-    setStatus("已读取当前菜单。" , "status-ok");
+    setStatus("已读取当前菜单。", "status-ok");
   } catch (e) {
     setStatus("读取失败：无法连上本地工具服务器", "status-err");
   }
@@ -207,11 +309,22 @@ async function saveMenu() {
       const text = (btn.text || "").trim();
       if (!text) continue;             // 空按钮忽略
       newRow.push(text);
-      if (!seen[text]) { replies[text] = btn.reply || ""; seen[text] = true; }
+      if (!seen[text]) {
+        seen[text] = true;
+        replies[text] = {
+          text: btn.replyText || "",
+          image: btn.image || ""
+        };
+      }
     }
     if (newRow.length) menu.push(newRow);
   }
-  const payload = { welcome_text: welcome, menu, replies };
+  const payload = {
+    welcome_text: welcome,
+    welcome_image: state.welcome_image,
+    menu,
+    replies
+  };
   try {
     const resp = await fetch("/api/menu", {
       method: "POST",
@@ -219,7 +332,6 @@ async function saveMenu() {
       body: JSON.stringify(payload)
     });
     if (resp.ok) {
-      // 本地显示也同步一份，防止状态不一致
       state.welcome_text = welcome;
       setStatus("✅ 已保存成功！现在需要在“自创的机器人”对话框里发送 “/start” 即可更新菜单。若无更新可手机端重开App再试下。", "status-ok");
     } else {
