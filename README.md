@@ -2,8 +2,8 @@
 
 《起因是我写完全自动量化交易系统后想在Telegram上自动宣发自己的产品顺便写机器人菜单工具（量化助手.名/这里只是拿来打举例，你们可以自定义修改）灵感来源YouTube上的老艺术家博主;YuFeng Deng 峰哥》
 
-一个让你的 Telegram 机器人有"菜单按钮"的小工具，自带一个**网页版可视化菜单编辑器**——不用懂编程，在网页上点点鼠标就能改机器人菜单。**如嫌麻烦或实在不会安装，可微信：DDDYYY100861 帮部署安装有收少数服务费**
-Telegram：[@BotFather菜单助手群](https://t.me/BotFatherzhushou)——[@BotFather菜单助手机器人](https://t.me/BotFatherMenuTool_bot)——[@量化助手机器人](https://t.me/lianghuazhushoubot)
+一个让你的 Telegram 机器人有"菜单按钮"的小工具，自带一个**网页版可视化菜单编辑器**——不用懂编程，在网页上点点鼠标就能改机器人菜单。**如嫌麻烦或实在不会安装，[可微信：DDDYYY100861](微信.jpg) 帮部署安装有收少数服务费**
+Telegram：[@BotFather菜单助手群](https://t.me/BotFatherzhushou)——[@BotFather菜单助手机器人](https://t.me/BotFatherMenuTool_bot)——[@量化助手机器人](https://t.me/lianghuazhushoubot) 
 
 ## 这个项目是干嘛的（大白话）
 
