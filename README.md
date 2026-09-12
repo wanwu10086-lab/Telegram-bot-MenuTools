@@ -2,7 +2,8 @@
 
 《起因是我写完全自动量化交易系统后想在Telegram上自动宣发自己的产品顺便写机器人菜单工具（量化助手.名/这里只是拿来打举例，你们可以自定义修改）灵感来源YouTube上的老艺术家博主;YuFeng Deng 峰哥》
 
-一个让你的 Telegram 机器人有"菜单按钮"的小工具，自带一个**网页版可视化菜单编辑器**——不用懂编程，在网页上点点鼠标就能改机器人菜单。**如嫌麻烦或小白不会安装，可微信；DDDYYY100861 有收少数服务费**
+一个让你的 Telegram 机器人有"菜单按钮"的小工具，自带一个**网页版可视化菜单编辑器**——不用懂编程，在网页上点点鼠标就能改机器人菜单。**如嫌麻烦或实在不会安装，可微信：DDDYYY100861 帮部署安装有收少数服务费**
+Telegram：[@BotFather菜单助手群](https://t.me/BotFatherzhushou)——[@BotFather菜单助手机器人](https://t.me/BotFatherMenuTool_bot)——[@量化助手机器人](https://t.me/lianghuazhushoubot)
 
 ## 这个项目是干嘛的（大白话）
 
@@ -28,11 +29,11 @@
 1. 在Telegram上注册一个机器人并取好起名字（比如"量化助手"）
 2. 完成后 BotFather 会给你一串 Token（格式像 123456789:AAxxxxxxxxxxxx），复制保存好
 
-**第 2 步：安装 Python**
+**第 2 步：安装 Python解释器（运行环境）**
 1. 到官网 https://www.python.org/downloads/ 下载安装（装 3.10 或更高版本）
 2. 安装时记得勾选 "Add Python to PATH"
 
-**第 3 步：安装依赖库**
+**第 3 步：用pip安装电报官方依赖库**
 1. 打开项目文件夹，在文件夹地址栏输入 cmd 回车
 2. 在黑窗口里输入下面命令回车：
    pip install python-telegram-bot
