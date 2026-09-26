@@ -4,7 +4,8 @@
 
 一个让你的 Telegram 机器人有"菜单按钮"的小工具，自带一个**网页版可视化菜单编辑器**——不用懂编程，在网页上点点鼠标就能改机器人菜单。**如嫌麻烦或看教程也实在不会安装的，[可微信：DDDYYY100861](微信.jpg) 帮辅解部署安装有收少数服务费。**
 
-Telegram：[@玩物的TG菜单编辑交流群](https://t.me/+Moyq4KIvJmU2MTVl)——[玩物tg菜单工具频道](https://t.me/+Nrrkvu0E1xVjMGRl)更新通知——[@玩物的tg简易菜单编辑工具](https://t.me/wwtgcdbot)机器人——[@玩物/量化系统/策略频道](https://t.me/+YH0ReBjMJccxYTk1) 
+Telegram：[@玩物的TG菜单编辑交流群](https://t.me/+Moyq4KIvJmU2MTVl)——[玩物tg菜单工具频道](https://t.me/+Nrrkvu0E1xVjMGRl)更新通知——[@玩物的tg简易菜单编辑工具](https://t.me/wwtgcdbot)机器人
+——[@玩物/量化系统/策略频道](https://t.me/+YH0ReBjMJccxYTk1) 
 
 ## 这个项目是干嘛的（大白话）
 
